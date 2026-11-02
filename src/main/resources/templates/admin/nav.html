@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav class="admin-nav" th:fragment="nav">
+    <a class="admin-nav__link" th:href="@{/admin/posts}">Посты</a>
+    <a class="admin-nav__link" th:href="@{/admin/comments}">Модерация комментариев</a>
+    <a class="admin-nav__link" th:href="@{/admin/users}">Пользователи</a>
+    <a class="admin-nav__link" th:href="@{/}">На сайт</a>
+</nav>
+</body>
+</html>

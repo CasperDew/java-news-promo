@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Админка: посты')}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="container">
+    <nav th:replace="~{admin/nav :: nav}"></nav>
+    <div class="alert alert--ok" th:if="${message}" th:text="${message}"></div>
+    <div class="admin-grid">
+        <section class="panel">
+            <h2>Новый пост</h2>
+            <form class="form" th:action="@{/admin/posts}" th:object="${postForm}" method="post" enctype="multipart/form-data">
+                <label>Заголовок <input th:field="*{title}" maxlength="200" required>
+                    <span class="error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span></label>
+                <label>Анонс <textarea th:field="*{summary}" maxlength="500" rows="3" required></textarea>
+                    <span class="error" th:if="${#fields.hasErrors('summary')}" th:errors="*{summary}"></span></label>
+                <label>Текст <textarea th:field="*{content}" rows="8" required></textarea>
+                    <span class="error" th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></span></label>
+                <fieldset class="image-field">
+                    <legend>Картинка (необязательно)</legend>
+                    <div class="seg">
+                        <label><input type="radio" name="imageSource" value="url" th:checked="${imageSource != 'file'}"> По ссылке</label>
+                        <label><input type="radio" name="imageSource" value="file" th:checked="${imageSource == 'file'}"> С компьютера</label>
+                    </div>
+                    <div data-image-pane="url">
+                        <input th:field="*{imageUrl}" placeholder="https://...">
+                        <span class="error" th:if="${#fields.hasErrors('imageUrl')}" th:errors="*{imageUrl}"></span>
+                    </div>
+                    <div data-image-pane="file">
+                        <input type="file" name="imageFile" accept="image/jpeg,image/png,image/gif,image/webp">
+                        <small class="muted">JPG, PNG, GIF или WEBP, до 5 МБ</small>
+                    </div>
+                    <span class="error" th:if="${imageError}" th:text="${imageError}"></span>
+                    <img class="image-preview" id="imagePreview" alt="Предпросмотр" hidden>
+                </fieldset>
+                <label style="flex-direction:row;align-items:center"><input type="checkbox" th:field="*{published}" style="width:auto"> Опубликовать сразу</label>
+                <button class="btn" type="submit">Сохранить</button>
+            </form>
+        </section>
+        <section class="panel">
+            <h2>Все посты</h2>
+            <p class="muted" th:if="${#lists.isEmpty(posts)}">Постов пока нет.</p>
+            <table class="table" th:unless="${#lists.isEmpty(posts)}">
+                <thead><tr><th>Заголовок</th><th>Статус</th><th>&#9829;</th><th>&#128172;</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="p : ${posts}">
+                    <td><a th:href="@{/posts/{id}(id=${p.post.id})}" th:text="${p.post.title}"></a><br>
+                        <span class="muted" th:text="${#temporals.format(p.post.createdAt, 'dd.MM.yyyy HH:mm')}"></span></td>
+                    <td><span class="badge" th:classappend="${p.post.published} ? 'badge--ok' : 'badge--off'"
+                              th:text="${p.post.published} ? 'Опубликован' : 'Черновик'"></span></td>
+                    <td th:text="${p.likes}"></td>
+                    <td th:text="${p.comments}"></td>
+                    <td class="table__actions">
+                        <form th:action="@{/admin/posts/{id}/toggle(id=${p.post.id})}" method="post">
+                            <button class="btn btn--sm btn--ghost" type="submit" th:text="${p.post.published} ? 'Скрыть' : 'Опубликовать'"></button>
+                        </form>
+                        <form th:action="@{/admin/posts/{id}/delete(id=${p.post.id})}" method="post"
+                              onsubmit="return confirm('Удалить пост вместе с лайками и комментариями?')">
+                            <button class="btn btn--sm btn--danger" type="submit">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</main>
+<script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

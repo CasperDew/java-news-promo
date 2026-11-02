@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments :: head('Пользователи')}"></head>
+<body th:attr="data-open-user=${openUser},data-q=${q}">
+<header th:replace="~{fragments :: header}"></header>
+<main class="container">
+    <nav th:replace="~{admin/nav :: nav}"></nav>
+    <section class="panel">
+        <h2>Пользователи</h2>
+        <form class="search" method="get" th:action="@{/admin/users}">
+            <input type="search" name="q" th:value="${q}" placeholder="Поиск по логину или email" autofocus>
+            <button class="btn" type="submit">Найти</button>
+            <a class="btn btn--ghost" th:if="${!#strings.isEmpty(q)}" th:href="@{/admin/users}">Сбросить</a>
+        </form>
+        <p class="muted" th:if="${#lists.isEmpty(users)}">Никого не найдено.</p>
+        <table class="table table--click" th:unless="${#lists.isEmpty(users)}">
+            <thead><tr><th>Логин</th><th>Email</th><th>Роли</th><th>Статус</th><th>Регистрация</th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${users}" th:attr="data-user-id=${r.user.id}" title="Открыть карточку">
+                <td><strong th:text="${r.user.username}"></strong></td>
+                <td th:text="${r.user.email}"></td>
+                <td><span class="badge badge--role" th:each="role : ${r.roles}" th:text="${role.label}"></span></td>
+                <td>
+                    <span class="badge badge--warn" th:if="${r.muted}">Мут</span>
+                    <span class="badge badge--danger" th:if="${r.banned}">Бан</span>
+                    <span class="badge badge--ok" th:unless="${r.muted or r.banned}">Активен</span>
+                </td>
+                <td th:text="${#temporals.format(r.user.createdAt, 'dd.MM.yyyy')}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+<div class="modal" id="modal-user">
+    <div class="modal__box modal__box--wide">
+        <button class="modal__close" type="button" data-close>&times;</button>
+        <div id="userFlash">
+            <div class="alert alert--ok" th:if="${message}" th:text="${message}"></div>
+            <div class="alert alert--error" th:if="${error}" th:text="${error}"></div>
+        </div>
+        <div id="userCard"></div>
+    </div>
+</div>
+<script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

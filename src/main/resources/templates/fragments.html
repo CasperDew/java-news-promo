@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="${title} + ' | NewsPromo'">NewsPromo</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="header" th:fragment="header">
+    <div class="container header__inner">
+        <a class="logo" th:href="@{/}">News<span>Promo</span></a>
+        <nav class="nav">
+            <th:block sec:authorize="isAnonymous()">
+                <a class="btn btn--ghost" href="#" data-open="login">Войти</a>
+                <a class="btn" href="#" data-open="register">Регистрация</a>
+            </th:block>
+            <th:block sec:authorize="isAuthenticated()">
+                <span class="nav__user" sec:authentication="name">user</span>
+                <a class="btn btn--ghost" sec:authorize="hasRole('ADMIN')" th:href="@{/admin}">Админка</a>
+                <form th:action="@{/logout}" method="post">
+                    <button class="btn btn--ghost" type="submit">Выйти</button>
+                </form>
+            </th:block>
+        </nav>
+    </div>
+</header>
+
+<th:block th:fragment="modals">
+    <div id="autoOpen" th:attr="data-modal=${openModal != null ? openModal : ''}"></div>
+
+    <div class="modal" id="modal-login" sec:authorize="isAnonymous()">
+        <div class="modal__box">
+            <button class="modal__close" type="button" data-close>&times;</button>
+            <h2>Вход</h2>
+            <div class="alert alert--error" th:if="${param.error}">Неверный логин или пароль</div>
+            <div class="alert alert--error" th:if="${param.banned}">Аккаунт заблокирован администратором</div>
+            <div class="alert alert--ok" th:if="${param.registered}">Регистрация прошла успешно. Войдите в аккаунт.</div>
+            <form class="form" th:action="@{/login}" method="post">
+                <label>Логин <input name="username" required autocomplete="username"></label>
+                <label>Пароль <input type="password" name="password" required autocomplete="current-password"></label>
+                <button class="btn btn--block" type="submit">Войти</button>
+            </form>
+            <p class="modal__switch">Нет аккаунта? <a href="#" data-switch="register">Зарегистрироваться</a></p>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-register" sec:authorize="isAnonymous()">
+        <div class="modal__box">
+            <button class="modal__close" type="button" data-close>&times;</button>
+            <h2>Регистрация</h2>
+            <form class="form" th:action="@{/register}" th:object="${registerForm}" method="post">
+                <div class="alert alert--error" th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></div>
+                <label>Логин <input th:field="*{username}" required maxlength="30" autocomplete="username">
+                    <span class="error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span></label>
+                <label>Email <input type="email" th:field="*{email}" required maxlength="120" autocomplete="email">
+                    <span class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span></label>
+                <label>Пароль <input type="password" th:field="*{password}" required minlength="8" maxlength="72" autocomplete="new-password">
+                    <span class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span></label>
+                <label>Повторите пароль <input type="password" th:field="*{confirmPassword}" required autocomplete="new-password">
+                    <span class="error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></span></label>
+                <button class="btn btn--block" type="submit">Создать аккаунт</button>
+            </form>
+            <p class="modal__switch">Уже есть аккаунт? <a href="#" data-switch="login">Войти</a></p>
+        </div>
+    </div>
+    <script th:src="@{/js/app.js}"></script>
+</th:block>
+
+<th:block th:fragment="actions(p)">
+    <div class="card__actions">
+        <button class="like" type="button" sec:authorize="isAuthenticated()"
+                th:classappend="${p.liked} ? 'like--active'" th:attr="data-post-id=${p.post.id}">
+            &#9829; <span class="like__count" th:text="${p.likes}">0</span>
+        </button>
+        <button class="like" type="button" sec:authorize="isAnonymous()" data-open="login">
+            &#9829; <span class="like__count" th:text="${p.likes}">0</span>
+        </button>
+        <a class="comments-link" th:href="@{/posts/{id}(id=${p.post.id})} + '#comments'"
+           th:text="'Комментарии: ' + ${p.comments}">Комментарии</a>
+    </div>
+</th:block>
+</body>
+</html>

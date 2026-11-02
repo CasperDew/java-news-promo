@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Админка: комментарии')}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="container">
+    <nav th:replace="~{admin/nav :: nav}"></nav>
+    <section class="panel">
+        <h2>Модерация комментариев</h2>
+        <div class="tabs">
+            <a class="tabs__item" th:classappend="${status == 'all'} ? 'tabs__item--active'" th:href="@{/admin/comments(status='all')}">Все</a>
+            <a class="tabs__item" th:classappend="${status == 'approved'} ? 'tabs__item--active'" th:href="@{/admin/comments(status='approved')}">Видимые</a>
+            <a class="tabs__item" th:classappend="${status == 'hidden'} ? 'tabs__item--active'" th:href="@{/admin/comments(status='hidden')}">Скрытые</a>
+        </div>
+        <p class="muted" th:if="${#lists.isEmpty(comments)}">Комментариев нет.</p>
+        <table class="table" th:unless="${#lists.isEmpty(comments)}">
+            <thead><tr><th>Пост</th><th>Автор</th><th>Текст</th><th>Дата</th><th>Статус</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="c : ${comments}" th:classappend="${!c.approved} ? 'row--muted'">
+                <td><a th:href="@{/posts/{id}(id=${c.post.id})}" th:text="${c.post.title}"></a></td>
+                <td th:text="${c.author.username}"></td>
+                <td class="table__text" th:text="${c.text}"></td>
+                <td th:text="${#temporals.format(c.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
+                <td><span class="badge" th:classappend="${c.approved} ? 'badge--ok' : 'badge--off'"
+                          th:text="${c.approved} ? 'Виден' : 'Скрыт'"></span></td>
+                <td class="table__actions">
+                    <form th:if="${!c.approved}" th:action="@{/admin/comments/{id}/approve(id=${c.id})}" method="post">
+                        <input type="hidden" name="status" th:value="${status}">
+                        <button class="btn btn--sm" type="submit">Показать</button>
+                    </form>
+                    <form th:if="${c.approved}" th:action="@{/admin/comments/{id}/hide(id=${c.id})}" method="post">
+                        <input type="hidden" name="status" th:value="${status}">
+                        <button class="btn btn--sm btn--ghost" type="submit">Скрыть</button>
+                    </form>
+                    <form th:action="@{/admin/comments/{id}/delete(id=${c.id})}" method="post"
+                          onsubmit="return confirm('Удалить комментарий?')">
+                        <input type="hidden" name="status" th:value="${status}">
+                        <button class="btn btn--sm btn--danger" type="submit">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

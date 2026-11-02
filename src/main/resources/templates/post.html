@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments :: head(${p.post.title})}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="container container--narrow">
+    <a class="back" th:href="@{/}">&larr; Все новости</a>
+    <article class="post">
+        <img class="post__img" th:if="${p.post.imageUrl}" th:src="${p.post.imageUrl}" th:alt="${p.post.title}">
+        <time th:text="${#temporals.format(p.post.createdAt, 'dd.MM.yyyy HH:mm')}"></time>
+        <h1 th:text="${p.post.title}"></h1>
+        <p class="post__summary" th:text="${p.post.summary}"></p>
+        <div class="post__content" th:text="${p.post.content}"></div>
+        <th:block th:replace="~{fragments :: actions(${p})}"></th:block>
+    </article>
+
+    <section class="comments" id="comments">
+        <h2 th:text="'Комментарии (' + ${#lists.size(comments)} + ')'">Комментарии</h2>
+        <div class="alert alert--error" th:if="${muteUntil}"
+             th:text="'Вам запрещено оставлять комментарии до ' + ${#temporals.format(muteUntil, 'dd.MM.yyyy HH:mm')}"></div>
+        <form class="comment-form" sec:authorize="isAuthenticated()" th:if="${muteUntil == null}" method="post"
+              th:action="@{/posts/{id}/comments(id=${p.post.id})}" th:object="${commentForm}">
+            <textarea th:field="*{text}" maxlength="2000" required placeholder="Ваш комментарий"></textarea>
+            <span class="error" th:if="${#fields.hasErrors('text')}" th:errors="*{text}"></span>
+            <button class="btn" type="submit">Отправить</button>
+        </form>
+        <p class="muted" sec:authorize="isAnonymous()">
+            <a href="#" data-open="login">Войдите</a>, чтобы оставить комментарий.
+        </p>
+        <p class="muted" th:if="${#lists.isEmpty(comments)}">Комментариев пока нет.</p>
+        <div class="comment" th:each="c : ${comments}">
+            <div class="comment__head">
+                <strong th:text="${c.author.username}"></strong>
+                <time th:text="${#temporals.format(c.createdAt, 'dd.MM.yyyy HH:mm')}"></time>
+            </div>
+            <p th:text="${c.text}"></p>
+        </div>
+    </section>
+</main>
+<th:block th:replace="~{fragments :: modals}"></th:block>
+</body>
+</html>

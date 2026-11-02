@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="card" class="ucard" th:with="u=${card.user}">
+    <h2 th:text="${u.username}">user</h2>
+    <p class="muted" th:text="${u.email} + ' · зарегистрирован ' + ${#temporals.format(u.createdAt, 'dd.MM.yyyy')}"></p>
+
+    <h3>Роли</h3>
+    <div class="chips">
+        <span class="chip" th:each="r : ${card.roles}">
+            <span th:text="${r.label}"></span>
+            <form method="post" th:action="@{/admin/users/{id}/roles/remove(id=${u.id})}"
+                  onsubmit="return confirm('Удалить роль у пользователя?')">
+                <input type="hidden" name="role" th:value="${r.name()}">
+                <input type="hidden" name="q" th:value="${q}">
+                <button class="chip__x" type="submit" title="Удалить роль">&times;</button>
+            </form>
+        </span>
+        <span class="muted" th:if="${#lists.isEmpty(card.roles)}">Ролей нет</span>
+    </div>
+    <form class="row-form" method="post" th:unless="${#lists.isEmpty(card.missingRoles)}"
+          th:action="@{/admin/users/{id}/roles/add(id=${u.id})}">
+        <input type="hidden" name="q" th:value="${q}">
+        <select name="role">
+            <option th:each="r : ${card.missingRoles}" th:value="${r.name()}" th:text="${r.label}"></option>
+        </select>
+        <button class="btn btn--sm" type="submit">Добавить роль</button>
+    </form>
+
+    <h3>Наказания</h3>
+    <p class="muted" th:if="${card.self}">Себя наказать нельзя.</p>
+    <div class="punish" th:unless="${card.self}">
+        <div class="punish__box">
+            <h4>Мут <small class="muted">запрет комментариев</small></h4>
+            <div th:if="${card.mute}" class="punish__active">
+                <p>Действует до <b th:text="${#temporals.format(card.mute.expiresAt, 'dd.MM.yyyy HH:mm')}"></b>
+                    (<span th:text="${card.mute.term}"></span>)</p>
+                <p class="muted" th:if="${card.mute.reason}" th:text="'Причина: ' + ${card.mute.reason}"></p>
+                <form method="post" th:action="@{/admin/users/{id}/punishments/{pid}/revoke(id=${u.id},pid=${card.mute.id})}">
+                    <input type="hidden" name="q" th:value="${q}">
+                    <button class="btn btn--sm btn--ghost" type="submit">Снять мут</button>
+                </form>
+            </div>
+            <form th:unless="${card.mute}" class="form" method="post" th:action="@{/admin/users/{id}/mute(id=${u.id})}">
+                <input type="hidden" name="q" th:value="${q}">
+                <div class="row-form">
+                    <input type="number" name="amount" min="1" required placeholder="Срок">
+                    <select name="unit"><option value="MINUTES">MINUTES</option><option value="HOURS">HOURS</option><option value="DAYS">DAYS</option><option value="MINUTES">MINUTES</option><option value="HOURS">HOURS</option></select>
+                </div>
+                <input name="reason" maxlength="500" placeholder="Причина (необязательно)">
+                <button class="btn btn--sm" type="submit">Выдать мут</button>
+            </form>
+        </div>
+        <div class="punish__box">
+            <h4>Бан <small class="muted">запрет входа на сайт</small></h4>
+            <div th:if="${card.ban}" class="punish__active">
+                <p>Действует до <b th:text="${#temporals.format(card.ban.expiresAt, 'dd.MM.yyyy HH:mm')}"></b>
+                    (<span th:text="${card.ban.term}"></span>)</p>
+                <p class="muted" th:if="${card.ban.reason}" th:text="'Причина: ' + ${card.ban.reason}"></p>
+                <form method="post" th:action="@{/admin/users/{id}/punishments/{pid}/revoke(id=${u.id},pid=${card.ban.id})}">
+                    <input type="hidden" name="q" th:value="${q}">
+                    <button class="btn btn--sm btn--ghost" type="submit">Снять бан</button>
+                </form>
+            </div>
+            <form th:unless="${card.ban}" class="form" method="post" th:action="@{/admin/users/{id}/ban(id=${u.id})}"
+                  onsubmit="return confirm('Забанить пользователя?')">
+                <input type="hidden" name="q" th:value="${q}">
+                <div class="row-form">
+                    <input type="number" name="days" min="1" required placeholder="Срок">
+                    <span class="row-form__unit">дней</span>
+                </div>
+                <input name="reason" maxlength="500" placeholder="Причина (необязательно)">
+                <button class="btn btn--sm btn--danger" type="submit">Забанить</button>
+            </form>
+        </div>
+    </div>
+
+    <h3>История наказаний</h3>
+    <p class="muted" th:if="${#lists.isEmpty(card.history)}">Наказаний не было.</p>
+    <table class="table table--compact" th:unless="${#lists.isEmpty(card.history)}">
+        <thead><tr><th>Тип</th><th>Срок</th><th>Выдано</th><th>До</th><th>Статус</th><th>Причина</th></tr></thead>
+        <tbody>
+        <tr th:each="h : ${card.history}" th:classappend="${h.active} ? '' : 'row--muted'">
+            <td th:text="${h.type.label}"></td>
+            <td th:text="${h.term}"></td>
+            <td th:text="${#temporals.format(h.createdAt, 'dd.MM.yy HH:mm')} + (${h.issuedBy} ? ' · ' + ${h.issuedBy.username} : '')"></td>
+            <td th:text="${#temporals.format(h.expiresAt, 'dd.MM.yy HH:mm')}"></td>
+            <td>
+                <span th:text="${h.status}"></span>
+                <form th:if="${h.active}" method="post"
+                      th:action="@{/admin/users/{id}/punishments/{pid}/revoke(id=${u.id},pid=${h.id})}">
+                    <input type="hidden" name="q" th:value="${q}">
+                    <button class="btn btn--sm btn--ghost" type="submit">Снять</button>
+                </form>
+            </td>
+            <td th:text="${h.reason ?: '—'}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

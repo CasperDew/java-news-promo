@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Новости')}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<section class="hero">
+    <div class="container">
+        <h1>Новости и акции</h1>
+        <p>Свежие анонсы, специальные предложения и события. Ставьте лайки и делитесь мнением в комментариях.</p>
+    </div>
+</section>
+<main class="container">
+    <p class="muted" th:if="${#lists.isEmpty(posts)}">Пока нет опубликованных постов.</p>
+    <div class="grid">
+        <article class="card" th:each="p : ${posts}">
+            <img class="card__img" th:if="${p.post.imageUrl}" th:src="${p.post.imageUrl}" th:alt="${p.post.title}">
+            <div class="card__body">
+                <time th:text="${#temporals.format(p.post.createdAt, 'dd.MM.yyyy HH:mm')}"></time>
+                <h2 class="card__title"><a th:href="@{/posts/{id}(id=${p.post.id})}" th:text="${p.post.title}"></a></h2>
+                <p class="card__summary" th:text="${p.post.summary}"></p>
+                <th:block th:replace="~{fragments :: actions(${p})}"></th:block>
+            </div>
+        </article>
+    </div>
+</main>
+<th:block th:replace="~{fragments :: modals}"></th:block>
+</body>
+</html>
